@@ -1,0 +1,5 @@
+torch~=2.6.0+cu124
+torchvision~=0.21.0+cu124
+pillow~=11.2.1
+efficientnet-pytorch~=0.7.1
+kagglehub~=0.2.7
