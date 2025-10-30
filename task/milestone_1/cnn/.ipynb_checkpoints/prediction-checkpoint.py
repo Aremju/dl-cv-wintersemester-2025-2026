@@ -6,8 +6,9 @@ from efficientnet_pytorch import EfficientNet
 import os
 
 # ---------------- CONFIG ----------------
-MODEL_PATH = "models/efficientnet_b4_animals.pth"  # Path to your trained model
-IMAGE_PATH = "../../data/animal_images/Testing Data/Testing Data/Lizard/Lizard-Testing (15).jpg"  # Image to classify
+MODEL_PATH = "best_efficientnet_b4.pth"  # Path to your trained model
+# IMAGE_PATH = "../../data/animal_images/Testing Data/Testing Data/Elephant/Elephant-Test (418).jpg"  # Image to classify
+IMAGE_PATH = "tetso.jpeg"  # Image to classify
 CLASS_NAMES = [
     "Beetle", "Butterfly", "Cat", "Cow", "Dog", "Elephant", "Gorilla",
     "Hippo", "Lizard", "Monkey", "Mouse", "Panda", "Spider", "Tiger", "Zebra"
