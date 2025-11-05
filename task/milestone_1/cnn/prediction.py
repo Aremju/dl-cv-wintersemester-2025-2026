@@ -5,17 +5,16 @@ from PIL import Image
 from efficientnet_pytorch import EfficientNet
 import os
 
-from util.model_loading.model_loader import load_model
+from util.model_loading.model_loader import load_model, DEVICE
 
 # ---------------- CONFIG ----------------
-MODEL_PATH = "../best_efficientnet_b4.pth"  # Path to your trained model
+
 # IMAGE_PATH = "../../data/animal_images/Testing Data/Testing Data/Elephant/Elephant-Test (418).jpg"  # Image to classify
 IMAGE_PATH = "../kekw.jpg"  # Image to classify
 CLASS_NAMES = [
     "Beetle", "Butterfly", "Cat", "Cow", "Dog", "Elephant", "Gorilla",
     "Hippo", "Lizard", "Monkey", "Mouse", "Panda", "Spider", "Tiger", "Zebra"
 ]
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 INPUT_SIZE = (380, 380)  # EfficientNet-B4 input size
 NET_NAME = "efficientnet-b4"
 
@@ -28,7 +27,7 @@ num_ftrs = model._fc.in_features
 model._fc = nn.Linear(num_ftrs, len(CLASS_NAMES))
 
 # 2️⃣ Load state_dict weights (your .pth file stores only parameters)
-state_dict = load_model(MODEL_PATH, DEVICE)
+state_dict = load_model()
 
 # Handle possible wrappers (e.g., if saved from DataParallel)
 if isinstance(state_dict, dict) and "state_dict" in state_dict:
