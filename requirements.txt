@@ -1,5 +1,4 @@
 torch==2.4.1
 torchvision==0.19.1
-pillow==12.0.0
 efficientnet-pytorch==0.7.1
 numpy==2.3.4
