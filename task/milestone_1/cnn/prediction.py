@@ -3,7 +3,13 @@ import torch.nn as nn
 from torchvision import transforms
 from PIL import Image
 from efficientnet_pytorch import EfficientNet
+
+import sys
 import os
+
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
+sys.path.append(project_root)
+
 
 from util.model_loading.model_loader import load_model, DEVICE
 
