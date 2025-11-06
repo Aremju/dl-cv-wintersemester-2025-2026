@@ -2,4 +2,5 @@ data
 .idea
 .vscode
 data/animal_images
-
+task/milestone_1/vision_transformer/logs/
+task/milestone_1/vision_transformer/output-models/
