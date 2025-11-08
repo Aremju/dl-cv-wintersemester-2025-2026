@@ -2,4 +2,4 @@ data
 .idea
 .vscode
 data/animal_images
-
+util/model_loading/__pycache__/**
