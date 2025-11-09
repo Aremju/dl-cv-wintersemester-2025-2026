@@ -10,13 +10,13 @@ import time, os, json, numpy as np
 from datetime import datetime
 
 
-# ----------------------------- CONFIG -----------------------------
+# GPU setup
 use_gpu = torch.cuda.is_available()
 print("Using GPU:", use_gpu)
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
-# === Hyperparameters ===
-data_dir = "../../../../data/animal_images"
+# Hyperparameters and setup
+data_dir = "../../../data/animal_images"
 num_epochs = 1
 batch_size = 32
 input_size = (380, 380)
@@ -27,14 +27,13 @@ net_name = "efficientnet-b4"
 epoch_to_resume_from = 0
 momentum = 0.9
 weight_decay = 0.0004
-gamma = 0.9  # exponential decay factor
-
-# Timestamp for saving logs uniquely
+gamma = 0.9
 timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
 
-# ----------------------------- DATA LOADING -----------------------------
 def loaddata(data_dir, batch_size, set_name, shuffle):
+    """Loads and preprocesses image data for training, validation, or testing."""
+    # Select correct subfolder depending on dataset split
     if set_name.lower() == "train":
         folder = os.path.join(data_dir, "train")
     elif set_name.lower() == "validation":
@@ -44,6 +43,7 @@ def loaddata(data_dir, batch_size, set_name, shuffle):
     else:
         raise ValueError(f"Unknown set_name: {set_name}")
 
+    # Basic preprocessing and augmentations
     data_transforms = {
         "train": transforms.Compose([
             transforms.Resize(input_size),
@@ -67,66 +67,75 @@ def loaddata(data_dir, batch_size, set_name, shuffle):
         ]),
     }
 
+    # Create dataset and loader for specified split
     dataset = datasets.ImageFolder(folder, transform=data_transforms[set_name.lower()])
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=0)
 
-    dataloader = torch.utils.data.DataLoader(
-        dataset, batch_size=batch_size, shuffle=shuffle, num_workers=0
-    )
     dataset_size = len(dataset)
     print(f"Loaded '{set_name}' from: {folder} ({dataset_size} images, {len(dataset.classes)} classes)")
     return {set_name: dataloader}, dataset_size
 
 
-# ----------------------------- TRAINING FUNCTION -----------------------------
 def train_model(model_ft, criterion, optimizer, scheduler, num_epochs=50):
+    """Trains the model, validates each epoch, and saves logs and best weights."""
     since = time.time()
     best_model_wts = model_ft.state_dict()
     best_acc = 0.0
     train_logs, val_logs = [], []
 
-    writer = SummaryWriter(log_dir=os.path.join(os.getcwd(), "runs"))
+    # Initialize TensorBoard writer
+    writer = SummaryWriter(log_dir=os.path.join(os.getcwd(), "runs", timestamp))
+    print(f"TensorBoard logs will be saved to: ./runs/{timestamp}")
 
     for epoch in range(epoch_to_resume_from, num_epochs):
         print(f"\nEpoch {epoch + 1}/{num_epochs}")
         print("-" * 30)
 
-        # --- TRAINING PHASE ---
+        # Enable training mode
         model_ft.train()
         dset_loaders, dset_sizes = loaddata(data_dir, batch_size, "train", shuffle=True)
-
         running_loss = 0.0
         running_corrects = 0
-        count = 0
+        batch_counter = 0
 
+        # Train over all batches
         for inputs, labels in dset_loaders["train"]:
             labels = torch.squeeze(labels.type(torch.LongTensor))
             if use_gpu:
                 inputs, labels = inputs.cuda(), labels.cuda()
 
+            # Zero gradients
             optimizer.zero_grad()
+
+            # Forward pass
             outputs = model_ft(inputs)
             loss = criterion(outputs, labels)
             _, preds = torch.max(outputs.data, 1)
 
+            # Backward pass + optimize
             loss.backward()
             optimizer.step()
 
+            # Update loss and accuracy
             running_loss += loss.item() * inputs.size(0)
             running_corrects += torch.sum(preds == labels.data)
-            count += 1
+            batch_counter += 1
 
-            if count % batch_size == 0:
-                batch_acc = (running_corrects.double() / (count * batch_size)).item()
-                print(f"[Batch {count}] Loss: {loss.item():.4f} | Train Acc: {batch_acc:.4f}")
+            # Display collective batch stats every few batches
+            if batch_counter % batch_size == 0:  # adjust frequency as needed
+                batch_acc = (running_corrects.double() / (batch_counter * batch_size)).item()
+                print(f"[Batch {batch_counter}] Loss: {loss.item():.4f} | Train Acc: {batch_acc:.4f}")
 
+        # Calculate epoch statistics
         epoch_loss = running_loss / dset_sizes
         epoch_acc = running_corrects.double() / dset_sizes
 
-        # --- VALIDATION PHASE ---
+        # Validation phase
         model_ft.eval()
         val_loss = 0.0
         all_preds, all_labels = [], []
 
+        # Load validation data
         val_loaders, val_sizes = loaddata(data_dir, batch_size, "validation", shuffle=False)
         with torch.no_grad():
             for inputs, labels in val_loaders["validation"]:
@@ -134,14 +143,17 @@ def train_model(model_ft, criterion, optimizer, scheduler, num_epochs=50):
                 if use_gpu:
                     inputs, labels = inputs.cuda(), labels.cuda()
 
+                # Forward pass
                 outputs = model_ft(inputs)
                 loss_val = criterion(outputs, labels)
                 _, preds = torch.max(outputs.data, 1)
 
+                # Accumulate loss and predictions
                 val_loss += loss_val.item() * inputs.size(0)
                 all_preds.extend(preds.cpu().numpy())
                 all_labels.extend(labels.cpu().numpy())
 
+        # Calculate validation metrics
         all_preds, all_labels = np.array(all_preds), np.array(all_labels)
         epoch_val_loss = val_loss / val_sizes
         epoch_val_acc = accuracy_score(all_labels, all_preds)
@@ -149,32 +161,34 @@ def train_model(model_ft, criterion, optimizer, scheduler, num_epochs=50):
         epoch_val_rec = recall_score(all_labels, all_preds, average="macro", zero_division=0)
         epoch_val_f1 = f1_score(all_labels, all_preds, average="macro", zero_division=0)
 
+        # Step the scheduler
         scheduler.step()
         current_lr = scheduler.get_last_lr()[0]
 
-        # --- Logging ---
+        # Output epoch metrics
         print(f"Train Loss: {epoch_loss:.4f} | Acc: {epoch_acc:.4f}")
         print(f"Val   Loss: {epoch_val_loss:.4f} | "
               f"Acc: {epoch_val_acc:.4f} | "
               f"Prec: {epoch_val_prec:.4f} | "
               f"Rec: {epoch_val_rec:.4f} | F1: {epoch_val_f1:.4f} | LR: {current_lr:.6f}\n")
 
-        # --- TensorBoard ---
-        #writer.add_scalar("Loss/train", epoch_loss, epoch)
-        #writer.add_scalar("Accuracy/train", epoch_acc, epoch)
-        #writer.add_scalar("Loss/val", epoch_val_loss, epoch)
-        #writer.add_scalar("Accuracy/val", epoch_val_acc, epoch)
-        #writer.add_scalar("Precision/val", epoch_val_prec, epoch)
-        #writer.add_scalar("Recall/val", epoch_val_rec, epoch)
-        #writer.add_scalar("F1/val", epoch_val_f1, epoch)
-        #writer.add_scalar("LearningRate", current_lr, epoch)
+        # Log metrics to TensorBoard
+        writer.add_scalar("Loss/train", epoch_loss, epoch + 1)
+        writer.add_scalar("Accuracy/train", epoch_acc, epoch + 1)
+        writer.add_scalar("Loss/val", epoch_val_loss, epoch + 1)
+        writer.add_scalar("Accuracy/val", epoch_val_acc, epoch + 1)
+        writer.add_scalar("Precision/val", epoch_val_prec, epoch + 1)
+        writer.add_scalar("Recall/val", epoch_val_rec, epoch + 1)
+        writer.add_scalar("F1/val", epoch_val_f1, epoch + 1)
+        writer.add_scalar("LearningRate", current_lr, epoch + 1)
+        writer.flush()
 
-        # --- Save logs for JSON ---
+        # Build structured log entries for export
         train_logs.append({
-            "epoch": f"{epoch + 1}",
-            "loss": f"{epoch_loss:.4f}",
-            "accuracy": f"{epoch_acc:.4f}",
-            "learning_rate": f"{current_lr}",
+            "epoch": epoch + 1,
+            "loss": round(epoch_loss, 4),
+            "accuracy": round(epoch_acc.item(), 4),
+            "learning_rate": current_lr
         })
         val_logs.append({
             "epoch": epoch + 1,
@@ -185,33 +199,36 @@ def train_model(model_ft, criterion, optimizer, scheduler, num_epochs=50):
             "val_f1": epoch_val_f1
         })
 
+        # Save best model if validation improves
         if epoch_val_acc > best_acc:
             best_acc = epoch_val_acc
             best_model_wts = model_ft.state_dict()
 
-    # --- Save logs as JSON ---
+    # Save logs to JSON
     os.makedirs(os.path.join(os.getcwd(), "logs"), exist_ok=True)
     with open(os.path.join(os.getcwd(), f"logs/train_logs_{timestamp}.json"), "w") as f:
         json.dump(train_logs, f, indent=4)
     with open(os.path.join(os.getcwd(), f"logs/val_logs_{timestamp}.json"), "w") as f:
         json.dump(val_logs, f, indent=4)
-
-    # --- Wrap up ---
+    
+    # End of training wrapping up
     writer.close()
     time_elapsed = time.time() - since
     print(f"Training complete in {time_elapsed // 60:.0f}m {time_elapsed % 60:.0f}s")
     print(f"Best val Acc: {best_acc:.4f}")
 
+    # Save the best model weights
+    os.makedirs(os.path.join(os.getcwd(), "models"), exist_ok=True)
     model_ft.load_state_dict(best_model_wts)
-    model_out_path = os.path.join(os.getcwd(), f"{net_name}_best_{timestamp}.pth")
+    model_out_path = os.path.join(os.getcwd(), f"models/{net_name}_best_{timestamp}.pth")
     torch.save(model_ft, model_out_path)
     print(f"Model saved to {model_out_path}")
 
     return train_logs, val_logs, best_model_wts
 
 
-# ----------------------------- TEST FUNCTION -----------------------------
 def test_model(model, criterion):
+    """Evaluates the trained model on the test set and saves final metrics."""
     model.eval()
     dset_loaders, dset_sizes = loaddata(data_dir, batch_size, "test", shuffle=False)
     all_preds, all_labels = [], []
@@ -227,19 +244,18 @@ def test_model(model, criterion):
             loss = criterion(outputs, labels)
             _, preds = torch.max(outputs.data, 1)
             running_loss += loss.item() * inputs.size(0)
-
             all_preds.extend(preds.cpu().numpy())
             all_labels.extend(labels.cpu().numpy())
 
+    # Compute metrics
     all_preds, all_labels = np.array(all_preds), np.array(all_labels)
-
-    # --- Final test metrics ---
     test_loss = running_loss / dset_sizes
     test_acc = accuracy_score(all_labels, all_preds)
     test_prec = precision_score(all_labels, all_preds, average="macro", zero_division=0)
     test_rec = recall_score(all_labels, all_preds, average="macro", zero_division=0)
     test_f1 = f1_score(all_labels, all_preds, average="macro", zero_division=0)
 
+    # Print model report like first version
     print("\nMODEL REPORT")
     print("-" * 40)
     print(f"Test Loss:     {test_loss:.4f}")
@@ -259,7 +275,7 @@ def test_model(model, criterion):
     print(f" Input Size:   {input_size}")
     print("-" * 40)
 
-    # Save to JSON (metrics + parameters)
+    # Save report
     report = {
         "timestamp": timestamp,
         "model_name": net_name,
@@ -282,13 +298,15 @@ def test_model(model, criterion):
             "f1_score": test_f1
         }
     }
+
+    os.makedirs(os.path.join(os.getcwd(), "logs"), exist_ok=True)
     with open(os.path.join(os.getcwd(), f"logs/model_report_{timestamp}.json"), "w") as f:
         json.dump(report, f, indent=4)
     print(f"Model report saved as model_report_{timestamp}.json")
 
 
-# ----------------------------- MAIN TRAINING WRAPPER -----------------------------
 def run():
+    """Initializes model, optimizer, scheduler, and runs training and testing."""
     if weights_loc:
         model_ft = torch.load(weights_loc)
     else:
@@ -302,8 +320,10 @@ def run():
 
     criterion = nn.CrossEntropyLoss().cuda() if use_gpu else nn.CrossEntropyLoss()
     optimizer = optim.SGD(model_ft.parameters(), lr=learning_rate, momentum=momentum, weight_decay=weight_decay)
+    # Exponential learning rate scheduler
     scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=gamma)
 
+    # Run training and validation
     train_logs, val_logs, best_model_wts = train_model(model_ft, criterion, optimizer, scheduler, num_epochs=num_epochs)
 
     print("-" * 10)
@@ -312,7 +332,6 @@ def run():
     test_model(model_ft, criterion)
 
 
-# ----------------------------- RUN -----------------------------
 if __name__ == "__main__":
     print(f"Dataset: {data_dir} | Epochs: {num_epochs} | Batch size: {batch_size} | Classes: {class_num}")
     run()
