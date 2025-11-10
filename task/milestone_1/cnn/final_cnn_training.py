@@ -17,7 +17,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 # Hyperparameters and setup
 data_dir = "../../../data/animal_images"
-num_epochs = 5
+num_epochs = 20
 batch_size = 32
 input_size = (380, 380)
 class_num = 15
