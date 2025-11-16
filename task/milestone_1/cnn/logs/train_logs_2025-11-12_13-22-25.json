@@ -1,0 +1,122 @@
+[
+    {
+        "epoch": 1,
+        "loss": 0.4545,
+        "accuracy": 0.9187,
+        "learning_rate": 0.0009000000000000001
+    },
+    {
+        "epoch": 2,
+        "loss": 0.1282,
+        "accuracy": 0.966,
+        "learning_rate": 0.0008100000000000001
+    },
+    {
+        "epoch": 3,
+        "loss": 0.0978,
+        "accuracy": 0.9736,
+        "learning_rate": 0.000729
+    },
+    {
+        "epoch": 4,
+        "loss": 0.0781,
+        "accuracy": 0.9798,
+        "learning_rate": 0.0006561000000000001
+    },
+    {
+        "epoch": 5,
+        "loss": 0.0725,
+        "accuracy": 0.9812,
+        "learning_rate": 0.00059049
+    },
+    {
+        "epoch": 6,
+        "loss": 0.0624,
+        "accuracy": 0.9832,
+        "learning_rate": 0.000531441
+    },
+    {
+        "epoch": 7,
+        "loss": 0.0547,
+        "accuracy": 0.9858,
+        "learning_rate": 0.0004782969
+    },
+    {
+        "epoch": 8,
+        "loss": 0.0491,
+        "accuracy": 0.9875,
+        "learning_rate": 0.00043046721
+    },
+    {
+        "epoch": 9,
+        "loss": 0.0461,
+        "accuracy": 0.9888,
+        "learning_rate": 0.000387420489
+    },
+    {
+        "epoch": 10,
+        "loss": 0.0424,
+        "accuracy": 0.9892,
+        "learning_rate": 0.0003486784401
+    },
+    {
+        "epoch": 11,
+        "loss": 0.0392,
+        "accuracy": 0.9901,
+        "learning_rate": 0.00031381059609000004
+    },
+    {
+        "epoch": 12,
+        "loss": 0.0375,
+        "accuracy": 0.9902,
+        "learning_rate": 0.00028242953648100003
+    },
+    {
+        "epoch": 13,
+        "loss": 0.0364,
+        "accuracy": 0.9906,
+        "learning_rate": 0.00025418658283290005
+    },
+    {
+        "epoch": 14,
+        "loss": 0.0361,
+        "accuracy": 0.9908,
+        "learning_rate": 0.00022876792454961005
+    },
+    {
+        "epoch": 15,
+        "loss": 0.0337,
+        "accuracy": 0.9915,
+        "learning_rate": 0.00020589113209464906
+    },
+    {
+        "epoch": 16,
+        "loss": 0.0321,
+        "accuracy": 0.9917,
+        "learning_rate": 0.00018530201888518417
+    },
+    {
+        "epoch": 17,
+        "loss": 0.033,
+        "accuracy": 0.9913,
+        "learning_rate": 0.00016677181699666576
+    },
+    {
+        "epoch": 18,
+        "loss": 0.0319,
+        "accuracy": 0.9916,
+        "learning_rate": 0.0001500946352969992
+    },
+    {
+        "epoch": 19,
+        "loss": 0.03,
+        "accuracy": 0.9923,
+        "learning_rate": 0.0001350851717672993
+    },
+    {
+        "epoch": 20,
+        "loss": 0.0293,
+        "accuracy": 0.9924,
+        "learning_rate": 0.00012157665459056936
+    }
+]
