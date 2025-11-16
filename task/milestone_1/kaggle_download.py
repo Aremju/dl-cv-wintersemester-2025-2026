@@ -9,7 +9,7 @@ target_dir = "../../data/animal_images"
 print("Downloading dataset")
 path = kagglehub.dataset_download("utkarshsaxenadn/animal-image-classification-dataset")
 
-print(f"Dataset wurde temporär heruntergeladen nach: {path}")
+print(f"Downloaded dataset to: {path}")
 
 os.makedirs(target_dir, exist_ok=True)
 
