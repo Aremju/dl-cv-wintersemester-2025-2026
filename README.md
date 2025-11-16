@@ -10,49 +10,24 @@ Das Projekt gliedert sich in drei aufeinander aufbauende Meilensteine.
 
 ```txt
 .
-├── data/ (nicht im Repo enthalten, siehe .gitignore)
-├── models/ (nicht im Repo enthalten, siehe .gitignore)
-├── util/
-│ └── ** (Wiederverwendbare Hilfsfunktionen für alle Meilensteine)
 ├── task/
 │ ├── milestone_1/
-│ │ └── ** (Meilenstein 1 Quellcode/Notebooks)
+│ │ ├── cnn/
+│ │ ├── vision_transformer/
+│ │ └── scripts
 │ ├── milestone_2/
-│ │ └── ** (Meilenstein 2 Quellcode/Notebooks)
+│ │ └── ** (Struktur wird noch definiert)
 │ └── milestone_3/
-│   └── ** (Meilenstein 3 Quellcode/Notebooks)
-├── requirements.txt (Python-Abhängigkeiten für Conda/Jupyter)
+│ └── ** (Struktur wird noch definiert)
+├── data/ (nicht im Repo enthalten)
+├── models/ (nicht im Repo enthalten)
+├── util/
+│ └── ** (Wiederverwendbare Hilfsfunktionen)
 ├── .gitignore
 └── README.md
 ```
 
 ---
-## Einrichtung
-
-Das Projekt basiert auf Conda und Jupyter Notebooks.
-
-### Conda-Umgebung erstellen
-
-```bash
-conda create -n dlcv_project python=3.12
-conda activate dlcv_project
-```
-
-### Abhängigkeiten installieren
-
-Füge deine benötigten Pakete in `requirements.txt` hinzu und installiere sie mit:
-
-```bash
-pip install -r requirements.txt
-```
-
-### Jupyter Notebook starten
-
-```bash
-jupyter notebook
-```
-
-Danach können die Notebooks unter `task/` direkt ausgeführt werden.
 
 ## Informationen zu den Autoren des Repositories
 

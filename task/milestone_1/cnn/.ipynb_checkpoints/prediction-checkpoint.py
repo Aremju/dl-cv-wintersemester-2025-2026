@@ -14,23 +14,24 @@ sys.path.append(project_root)
 from util.model_loading.model_loader import load_model, DEVICE
 
 # Config
-IMAGE_PATH = "../kekw.jpg"  # Image to classify
+# Test image
+IMAGE_PATH = "../test.jpg"
 CLASS_NAMES = [
     "Beetle", "Butterfly", "Cat", "Cow", "Dog", "Elephant", "Gorilla",
     "Hippo", "Lizard", "Monkey", "Mouse", "Panda", "Spider", "Tiger", "Zebra"
 ]
-INPUT_SIZE = (380, 380)  # EfficientNet-B4 input size
+# EfficientNet input size
+INPUT_SIZE = (380, 380)  
 NET_NAME = "efficientnet-b4"
 
-# Recreate the same EfficientNet-B4 architecture used during training
+# Load EfficientNet with own classes
 model = EfficientNet.from_name(NET_NAME)
 num_ftrs = model._fc.in_features
 model._fc = nn.Linear(num_ftrs, len(CLASS_NAMES))
 
-# Load state_dict weights (your .pth file stores only parameters)
+# Load model with weights
 state_dict = load_model()
 
-# Handle possible wrappers (e.g., if saved from DataParallel)
 if isinstance(state_dict, dict) and "state_dict" in state_dict:
     state_dict = state_dict["state_dict"]
 
@@ -63,7 +64,7 @@ def predict_image(image_path):
         predicted_class = CLASS_NAMES[pred_idx]
         confidence = probs[pred_idx].item()
 
-    print(f"\nPrediction: 🐾 {predicted_class} ({confidence*100:.2f}% confidence)")
+    print(f"\nPrediction: {predicted_class} ({confidence*100:.2f}% confidence)")
     return predicted_class, confidence
 
 if __name__ == "__main__":
