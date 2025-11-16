@@ -1,4 +1,3 @@
-# python
 import json
 import os
 import matplotlib.pyplot as plt
@@ -8,6 +7,7 @@ def load_json(path):
         return json.load(f)
 
 def find_runs(log_dir):
+    """Finds all runs in the given directory."""
     runs = {}
     if not os.path.isdir(log_dir):
         return runs
@@ -26,6 +26,7 @@ def find_runs(log_dir):
     return runs
 
 def format_model_name(model_name):
+    """Formats the model name for display."""
     if not model_name:
         return ''
     mn = model_name.strip()
@@ -38,45 +39,39 @@ def format_model_name(model_name):
 
 def extract_metrics(train_json, val_json):
     epochs = []
-    train_loss = []
-    train_acc = []
     if train_json:
         for e in train_json:
             epochs.append(e.get('epoch'))
-            train_loss.append(e.get('loss'))
-            train_acc.append(e.get('accuracy'))
     val_loss = []
     val_acc = []
     if val_json:
         for e in val_json:
             val_loss.append(e.get('val_loss'))
             val_acc.append(e.get('val_accuracy'))
-    return epochs, train_loss, train_acc, val_loss, val_acc
+    return epochs, val_loss, val_acc
 
 def select_ordered_keys(runs):
-    # Prefer explicit EfficientNet model order
+    """Creates a list of keys in order of preference for plotting."""
     desired = ['efficientnet-b1', 'efficientnet-b4', 'efficientnet-b7']
     present = [k for k in desired if k in runs]
     if present:
         return present
-    # Fallback: heuristic by suffix b1/b4/b7 inside key
     alt_map = {'b1': None, 'b4': None, 'b7': None}
     for k in runs:
+        kl = k.lower()
         for tag in alt_map:
-            if tag in k.lower():
+            if tag in kl:
                 alt_map[tag] = k
-    ordered = [alt_map[t] for t in ['b1', 'b4', 'b7'] if alt_map[t]]
-    return ordered
+    return [alt_map[t] for t in ['b1', 'b4', 'b7'] if alt_map[t]]
 
-def plot_separate_loss_accuracy(runs, out_dir):
+def plot_validation_side_by_side(runs, out_dir):
+    """Plots the validation loss and accuracy for each model side-by-side."""
     keys = select_ordered_keys(runs)
-    if len(keys) == 0:
+    if not keys:
         print("No matching runs for B1/B4/B7")
         return
 
-    # Collect data
-    plot_data = []
-    titles = []
+    series = []
     for k in keys:
         paths = runs[k]
         train_p = paths.get('train')
@@ -85,67 +80,62 @@ def plot_separate_loss_accuracy(runs, out_dir):
         train_json = load_json(train_p) if train_p and os.path.exists(train_p) else None
         val_json = load_json(val_p) if val_p and os.path.exists(val_p) else None
         report = load_json(rep_p) if rep_p and os.path.exists(rep_p) else None
-        epochs, t_loss, t_acc, v_loss, v_acc = extract_metrics(train_json, val_json)
-        if not epochs:
-            print(f"Skipping {k}: no training data")
+        epochs, v_loss, v_acc = extract_metrics(train_json, val_json)
+        if not v_loss and not v_acc:
+            print(f"Skipping {k}: no validation data")
             continue
-        title = k
+        label = k
         if report and isinstance(report, dict):
             model = report.get('model_name')
             if model:
-                title = format_model_name(model)
-        plot_data.append((epochs, t_loss, v_loss, t_acc, v_acc))
-        titles.append(title)
+                label = format_model_name(model)
 
-    if not plot_data:
-        print("No data to plot")
+        x = epochs if epochs and len(epochs) >= max(len(v_loss), len(v_acc)) else list(range(1, max(len(v_loss), len(v_acc)) + 1))
+        series.append((x[:len(v_loss)], v_loss, x[:len(v_acc)], v_acc, label))
+
+    if not series:
+        print("No validation data to plot")
         return
 
     os.makedirs(out_dir, exist_ok=True)
 
-    # Loss figure
-    fig_loss, axes_loss = plt.subplots(nrows=1, ncols=len(plot_data), figsize=(4 * len(plot_data), 4))
-    if len(plot_data) == 1:
-        axes_loss = [axes_loss]
-    for ax, (epochs, t_loss, v_loss, _, _), title in zip(axes_loss, plot_data, titles):
-        ax.plot(epochs, t_loss, '-', color='C0', linewidth=2, label='train loss')
-        if v_loss:
-            ax.plot(epochs[:len(v_loss)], v_loss, '-', color='C1', linewidth=2, label='val loss')
-        ax.set_title(title)
-        ax.set_xlabel('epoch')
-        ax.set_ylabel('loss')
-        ax.grid(alpha=0.3)
-        ax.legend(loc='upper right')
-    fig_loss.tight_layout()
-    out_loss = os.path.join(out_dir, 'efficientnet_b1_b4_b7_loss.png')
-    fig_loss.savefig(out_loss, dpi=200)
-    plt.close(fig_loss)
-    print(f"Saved loss plot: {out_loss}")
+    fig, (ax_loss, ax_acc) = plt.subplots(nrows=1, ncols=2, figsize=(10, 4))
+    plot_loss(ax_loss, series)
+    plot_accuracy(ax_acc, series)
+    fig.tight_layout()
+    out_path = os.path.join(out_dir, "efficientnet_b1_b4_b7_val_loss_accuracy.png")
+    fig.savefig(out_path, dpi=200)
+    plt.close(fig)
+    print(f"Saved combined plot: {out_path}")
 
-    # Accuracy figure
-    fig_acc, axes_acc = plt.subplots(nrows=1, ncols=len(plot_data), figsize=(4 * len(plot_data), 4))
-    if len(plot_data) == 1:
-        axes_acc = [axes_acc]
-    for ax, (epochs, _, _, t_acc, v_acc), title in zip(axes_acc, plot_data, titles):
-        ax.plot(epochs, t_acc, '-', color='C2', linewidth=2, label='train acc')
-        if v_acc:
-            ax.plot(epochs[:len(v_acc)], v_acc, '-', color='C3', linewidth=2, label='val acc')
-        ax.set_title(title)
-        ax.set_xlabel('epoch')
-        ax.set_ylabel('accuracy')
-        ax.grid(alpha=0.3)
-        ax.legend(loc='lower right')
-    fig_acc.tight_layout()
-    out_acc = os.path.join(out_dir, 'efficientnet_b1_b4_b7_accuracy.png')
-    fig_acc.savefig(out_acc, dpi=200)
-    plt.close(fig_acc)
-    print(f"Saved accuracy plot: {out_acc}")
+
+def plot_accuracy(ax_acc, series: list):
+    """Plots the accuracy for each model"""
+    for i, (_, _, x_acc, y_acc, label) in enumerate(series):
+        ax_acc.plot(x_acc, y_acc, linewidth=2, label=label, color=f"C{i}")
+    ax_acc.set_title("Validation Accuracy")
+    ax_acc.set_xlabel("epoch")
+    ax_acc.set_ylabel("val accuracy")
+    ax_acc.grid(alpha=0.3)
+    ax_acc.legend()
+
+
+def plot_loss(ax_loss, series: list):
+    """Plots the loss for each model"""
+    for i, (x_loss, y_loss, _, _, label) in enumerate(series):
+        ax_loss.plot(x_loss, y_loss, linewidth=2, label=label, color=f"C{i}")
+    ax_loss.set_title("Validation Loss")
+    ax_loss.set_xlabel("epoch")
+    ax_loss.set_ylabel("val loss")
+    ax_loss.grid(alpha=0.3)
+    ax_loss.legend()
+
 
 def main():
-    logs = 'logs'
-    out = 'logs/plots'
-    runs = find_runs(logs)
-    plot_separate_loss_accuracy(runs, out)
+    logs_directory = 'logs'
+    output_directory = 'logs/plots'
+    runs = find_runs(logs_directory)
+    plot_validation_side_by_side(runs, output_directory)
 
 if __name__ == '__main__':
     main()
