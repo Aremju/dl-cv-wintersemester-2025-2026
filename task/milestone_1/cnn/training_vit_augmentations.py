@@ -18,12 +18,12 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 # Hyperparameters and setup
 data_dir = "../../../data/animal_images"
 num_epochs = 20
-batch_size = 32
+batch_size = 16
 input_size = (380, 380)
 class_num = 15
 weights_loc = None
-learning_rate = 0.001
-net_name = "efficientnet-b4"
+learning_rate = 2e-4
+net_name = "efficientnet-b7"
 epoch_to_resume_from = 0
 momentum = 0.9
 weight_decay = 0.0004
@@ -46,9 +46,12 @@ def loaddata(data_dir, batch_size, set_name, shuffle):
     # Basic preprocessing and augmentations
     data_transforms = {
         "train": transforms.Compose([
+            transforms.RandomVerticalFlip(),
+            transforms.RandomResizedCrop(input_size),
+            transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3, hue=0.3),
             transforms.Resize(input_size),
             transforms.RandomHorizontalFlip(),
-            transforms.RandomRotation(10),
+            transforms.RandomRotation(15),
             transforms.ToTensor(),
             transforms.Normalize([0.485, 0.456, 0.406],
                                  [0.229, 0.224, 0.225]),
@@ -322,6 +325,8 @@ def run():
     optimizer = optim.SGD(model_ft.parameters(), lr=learning_rate, momentum=momentum, weight_decay=weight_decay)
     # Exponential learning rate scheduler
     scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=gamma)
+    # Cosine learning rate scheduler
+    # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=1, eta_min=0)
 
     # Run training and validation
     train_logs, val_logs, best_model_wts = train_model(model_ft, criterion, optimizer, scheduler, num_epochs=num_epochs)
