@@ -53,84 +53,99 @@ def extract_metrics(train_json, val_json):
             val_acc.append(e.get('val_accuracy'))
     return epochs, train_loss, train_acc, val_loss, val_acc
 
-def plot_combined(runs, out_dir):
-    keys = sorted(runs.keys())
-    if not keys:
-        print("No runs to plot")
+def select_ordered_keys(runs):
+    # Prefer explicit EfficientNet model order
+    desired = ['efficientnet-b1', 'efficientnet-b4', 'efficientnet-b7']
+    present = [k for k in desired if k in runs]
+    if present:
+        return present
+    # Fallback: heuristic by suffix b1/b4/b7 inside key
+    alt_map = {'b1': None, 'b4': None, 'b7': None}
+    for k in runs:
+        for tag in alt_map:
+            if tag in k.lower():
+                alt_map[tag] = k
+    ordered = [alt_map[t] for t in ['b1', 'b4', 'b7'] if alt_map[t]]
+    return ordered
+
+def plot_separate_loss_accuracy(runs, out_dir):
+    keys = select_ordered_keys(runs)
+    if len(keys) == 0:
+        print("No matching runs for B1/B4/B7")
         return
 
-    n = len(keys)
-    fig, axes = plt.subplots(nrows=n, ncols=2, figsize=(12, 4 * n), squeeze=False)
-
-    titles = [''] * n
-
-    for i, key in enumerate(keys):
-        paths = runs[key]
+    # Collect data
+    plot_data = []
+    titles = []
+    for k in keys:
+        paths = runs[k]
         train_p = paths.get('train')
         val_p = paths.get('val')
         rep_p = paths.get('report')
-
         train_json = load_json(train_p) if train_p and os.path.exists(train_p) else None
         val_json = load_json(val_p) if val_p and os.path.exists(val_p) else None
         report = load_json(rep_p) if rep_p and os.path.exists(rep_p) else None
-
         epochs, t_loss, t_acc, v_loss, v_acc = extract_metrics(train_json, val_json)
         if not epochs:
-            print(f"Skipping {key}: no training data")
+            print(f"Skipping {k}: no training data")
             continue
-
-        ax_loss = axes[i][0]
-        ax_acc = axes[i][1]
-
-        ax_loss.plot(epochs, t_loss, '-', color='C0', linewidth=2, label='train loss')
-        if v_loss:
-            ax_loss.plot(epochs[:len(v_loss)], v_loss, '-', color='C1', linewidth=2, label='val loss')
-        ax_loss.set_ylabel('loss')
-        ax_loss.grid(alpha=0.3)
-        ax_loss.legend(loc='upper right')
-
-        ax_acc.plot(epochs, t_acc, '-', color='C2', linewidth=2, label='train acc')
-        if v_acc:
-            ax_acc.plot(epochs[:len(v_acc)], v_acc, '-', color='C3', linewidth=2, label='val acc')
-        ax_acc.set_ylabel('accuracy')
-        ax_acc.grid(alpha=0.3)
-        ax_acc.legend(loc='lower right')
-
-        title = key
+        title = k
         if report and isinstance(report, dict):
             model = report.get('model_name')
             if model:
                 title = format_model_name(model)
+        plot_data.append((epochs, t_loss, v_loss, t_acc, v_acc))
+        titles.append(title)
 
-        titles[i] = title
-
-        ax_acc.set_xlabel('epoch')
-        ax_loss.set_xlabel('epoch')
-
-    fig.tight_layout(rect=[0, 0, 1, 0.96])
-
-    for i, t in enumerate(titles):
-        if not t:
-            continue
-        ax_l = axes[i][0]
-        ax_r = axes[i][1]
-        pos_l = ax_l.get_position()
-        pos_r = ax_r.get_position()
-        x_center = (pos_l.x0 + pos_r.x1) / 2.0
-        y = pos_l.y1 + 0.01
-        fig.text(x_center, y, t, ha='center', va='bottom', fontsize=12)
+    if not plot_data:
+        print("No data to plot")
+        return
 
     os.makedirs(out_dir, exist_ok=True)
-    out_path = os.path.join(out_dir, 'efficientnet_b1_b4_b7_combined.png')
-    fig.savefig(out_path, dpi=200)
-    plt.close(fig)
-    print(f"Saved combined plot: {out_path}")
+
+    # Loss figure
+    fig_loss, axes_loss = plt.subplots(nrows=1, ncols=len(plot_data), figsize=(4 * len(plot_data), 4))
+    if len(plot_data) == 1:
+        axes_loss = [axes_loss]
+    for ax, (epochs, t_loss, v_loss, _, _), title in zip(axes_loss, plot_data, titles):
+        ax.plot(epochs, t_loss, '-', color='C0', linewidth=2, label='train loss')
+        if v_loss:
+            ax.plot(epochs[:len(v_loss)], v_loss, '-', color='C1', linewidth=2, label='val loss')
+        ax.set_title(title)
+        ax.set_xlabel('epoch')
+        ax.set_ylabel('loss')
+        ax.grid(alpha=0.3)
+        ax.legend(loc='upper right')
+    fig_loss.tight_layout()
+    out_loss = os.path.join(out_dir, 'efficientnet_b1_b4_b7_loss.png')
+    fig_loss.savefig(out_loss, dpi=200)
+    plt.close(fig_loss)
+    print(f"Saved loss plot: {out_loss}")
+
+    # Accuracy figure
+    fig_acc, axes_acc = plt.subplots(nrows=1, ncols=len(plot_data), figsize=(4 * len(plot_data), 4))
+    if len(plot_data) == 1:
+        axes_acc = [axes_acc]
+    for ax, (epochs, _, _, t_acc, v_acc), title in zip(axes_acc, plot_data, titles):
+        ax.plot(epochs, t_acc, '-', color='C2', linewidth=2, label='train acc')
+        if v_acc:
+            ax.plot(epochs[:len(v_acc)], v_acc, '-', color='C3', linewidth=2, label='val acc')
+        ax.set_title(title)
+        ax.set_xlabel('epoch')
+        ax.set_ylabel('accuracy')
+        ax.grid(alpha=0.3)
+        ax.legend(loc='lower right')
+    fig_acc.tight_layout()
+    out_acc = os.path.join(out_dir, 'efficientnet_b1_b4_b7_accuracy.png')
+    fig_acc.savefig(out_acc, dpi=200)
+    plt.close(fig_acc)
+    print(f"Saved accuracy plot: {out_acc}")
 
 def main():
     logs = 'logs'
     out = 'logs/plots'
     runs = find_runs(logs)
-    plot_combined(runs, out)
+    plot_separate_loss_accuracy(runs, out)
 
 if __name__ == '__main__':
     main()
