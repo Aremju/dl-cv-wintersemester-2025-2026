@@ -6,3 +6,5 @@ util/model_loading/__pycache__/**
 task/milestone_1/vision_transformer/logs/
 output-models*
 task/milestone_1/cnn/models/
+
+offline_models/**
