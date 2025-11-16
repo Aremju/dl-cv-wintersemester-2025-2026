@@ -175,7 +175,7 @@ def train_model(model_ft, criterion, optimizer, scheduler, num_epochs=50):
             batch_counter += 1
 
             # Display collective batch stats every few batches
-            if batch_counter % (batch_size*2) == 0:
+            if batch_counter % 32 == 0:
                 batch_acc = (running_corrects.double() / (batch_counter * batch_size)).item()
                 print(f"[Batch {batch_counter}] Loss: {loss.item():.4f} | Train Acc: {batch_acc:.4f}")
 
