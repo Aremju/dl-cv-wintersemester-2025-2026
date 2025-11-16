@@ -17,7 +17,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 # Hyperparameters and setup
 data_dir = "../../../data/animal_images"
-num_epochs = 20
+num_epochs = 5
 batch_size = 16
 input_size = (380, 380)
 class_num = 15
@@ -125,7 +125,7 @@ def train_model(model_ft, criterion, optimizer, scheduler, num_epochs=50):
             batch_counter += 1
 
             # Display collective batch stats every few batches
-            if batch_counter % batch_size == 0:  # adjust frequency as needed
+            if batch_counter % (batch_size*2) == 0:  # adjust frequency as needed
                 batch_acc = (running_corrects.double() / (batch_counter * batch_size)).item()
                 print(f"[Batch {batch_counter}] Loss: {loss.item():.4f} | Train Acc: {batch_acc:.4f}")
 
@@ -209,9 +209,9 @@ def train_model(model_ft, criterion, optimizer, scheduler, num_epochs=50):
 
     # Save logs to JSON
     os.makedirs(os.path.join(os.getcwd(), "logs"), exist_ok=True)
-    with open(os.path.join(os.getcwd(), f"logs/train_logs_{timestamp}.json"), "w") as f:
+    with open(os.path.join(os.getcwd(), f"logs/train_logs_{net_name}_{timestamp}.json"), "w") as f:
         json.dump(train_logs, f, indent=4)
-    with open(os.path.join(os.getcwd(), f"logs/val_logs_{timestamp}.json"), "w") as f:
+    with open(os.path.join(os.getcwd(), f"logs/val_logs_{net_name}_{timestamp}.json"), "w") as f:
         json.dump(val_logs, f, indent=4)
     
     # End of training wrapping up
@@ -303,7 +303,7 @@ def test_model(model, criterion):
     }
 
     os.makedirs(os.path.join(os.getcwd(), "logs"), exist_ok=True)
-    with open(os.path.join(os.getcwd(), f"logs/model_report_{timestamp}.json"), "w") as f:
+    with open(os.path.join(os.getcwd(), f"logs/model_report_{net_name}_{timestamp}.json"), "w") as f:
         json.dump(report, f, indent=4)
     print(f"Model report saved as model_report_{timestamp}.json")
 

@@ -1,0 +1,32 @@
+[
+    {
+        "epoch": 1,
+        "loss": 2.014,
+        "accuracy": 0.6883,
+        "learning_rate": 0.00018
+    },
+    {
+        "epoch": 2,
+        "loss": 0.815,
+        "accuracy": 0.9141,
+        "learning_rate": 0.000162
+    },
+    {
+        "epoch": 3,
+        "loss": 0.4443,
+        "accuracy": 0.9303,
+        "learning_rate": 0.00014580000000000002
+    },
+    {
+        "epoch": 4,
+        "loss": 0.3303,
+        "accuracy": 0.9367,
+        "learning_rate": 0.00013122000000000003
+    },
+    {
+        "epoch": 5,
+        "loss": 0.2772,
+        "accuracy": 0.9418,
+        "learning_rate": 0.00011809800000000003
+    }
+]

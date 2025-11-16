@@ -1,0 +1,25 @@
+{
+    "timestamp": "2025-11-16_14-38-55",
+    "model_name": "efficientnet-b7",
+    "input_size": [
+        380,
+        380
+    ],
+    "training_parameters": {
+        "epochs": 5,
+        "batch_size": 16,
+        "learning_rate": 0.0002,
+        "momentum": 0.9,
+        "weight_decay": 0.0004,
+        "gamma": 0.9,
+        "optimizer": "SGD",
+        "scheduler": "ExponentialLR"
+    },
+    "test_metrics": {
+        "loss": 0.15982061058737582,
+        "accuracy": 0.97339593114241,
+        "precision": 0.9508759204508607,
+        "recall": 0.9775777233579691,
+        "f1_score": 0.9630009889778728
+    }
+}
