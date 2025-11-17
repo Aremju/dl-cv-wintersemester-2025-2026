@@ -18,7 +18,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 # Hyperparameters and setup
 data_dir = "../../../data/animal_images"
 num_epochs = 20
-batch_size = 16
+batch_size = 32
 input_size = (380, 380)
 class_num = 15
 weights_loc = None
@@ -46,12 +46,12 @@ def loaddata(data_dir, batch_size, set_name, shuffle):
     # Basic preprocessing and augmentations
     data_transforms = {
         "train": transforms.Compose([
-            transforms.RandomVerticalFlip(),
-            transforms.RandomResizedCrop(input_size),
-            transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3, hue=0.3),
+            # transforms.RandomVerticalFlip(),
+            # transforms.RandomResizedCrop(input_size),
+            # transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3, hue=0.3),
             transforms.Resize(input_size),
-            transforms.RandomHorizontalFlip(),
-            transforms.RandomRotation(15),
+            # transforms.RandomHorizontalFlip(),
+            # transforms.RandomRotation(15),
             transforms.ToTensor(),
             transforms.Normalize([0.485, 0.456, 0.406],
                                  [0.229, 0.224, 0.225]),
@@ -125,7 +125,7 @@ def train_model(model_ft, criterion, optimizer, scheduler, num_epochs=50):
             batch_counter += 1
 
             # Display collective batch stats every few batches
-            if batch_counter % batch_size == 0:  # adjust frequency as needed
+            if batch_counter % batch_size == 0:
                 batch_acc = (running_corrects.double() / (batch_counter * batch_size)).item()
                 print(f"[Batch {batch_counter}] Loss: {loss.item():.4f} | Train Acc: {batch_acc:.4f}")
 
@@ -167,6 +167,7 @@ def train_model(model_ft, criterion, optimizer, scheduler, num_epochs=50):
         # Step the scheduler
         scheduler.step()
         current_lr = scheduler.get_last_lr()[0]
+        # current_lr = learning_rate
 
         # Output epoch metrics
         print(f"Train Loss: {epoch_loss:.4f} | Acc: {epoch_acc:.4f}")
@@ -313,7 +314,7 @@ def run():
     if weights_loc:
         model_ft = torch.load(weights_loc)
     else:
-        model_ft = EfficientNet.from_pretrained(net_name)
+        model_ft = EfficientNet.from_pretrained("efficientnet-b4")
 
     num_ftrs = model_ft._fc.in_features
     model_ft._fc = nn.Linear(num_ftrs, class_num)

@@ -50,8 +50,8 @@ def loaddata(data_dir, batch_size, set_name, shuffle):
             # transforms.RandomResizedCrop(input_size),
             # transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3, hue=0.3),
             transforms.Resize(input_size),
-            transforms.RandomHorizontalFlip(),
-            transforms.RandomRotation(15),
+            # transforms.RandomHorizontalFlip(),
+            # transforms.RandomRotation(15),
             transforms.ToTensor(),
             transforms.Normalize([0.485, 0.456, 0.406],
                                  [0.229, 0.224, 0.225]),
@@ -131,7 +131,7 @@ def train_model(model_ft, criterion, optimizer, scheduler, num_epochs=50):
     
     early_stopper = EarlyStopping(
         patience=patience,
-        delta=1.000,
+        delta=0.001,
         mode="max",
         metric_name=monitor_metric
     )
@@ -379,7 +379,7 @@ def run():
     if weights_loc:
         model_ft = torch.load(weights_loc)
     else:
-        model_ft = EfficientNet.from_pretrained(net_name)
+        model_ft = EfficientNet.from_pretrained("efficientnet-b7")
 
     num_ftrs = model_ft._fc.in_features
     model_ft._fc = nn.Linear(num_ftrs, class_num)

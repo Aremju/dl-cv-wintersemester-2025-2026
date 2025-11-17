@@ -17,13 +17,13 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 # Hyperparameters and setup
 data_dir = "../../../data/animal_images"
-num_epochs = 20
-batch_size = 16
+num_epochs = 5
+batch_size = 32
 input_size = (380, 380)
 class_num = 15
 weights_loc = None
 learning_rate = 2e-4
-net_name = "efficientnet-b7"
+net_name = "efficientnet-b4"
 epoch_to_resume_from = 0
 momentum = 0.9
 weight_decay = 0.0004
@@ -78,44 +78,6 @@ def loaddata(data_dir, batch_size, set_name, shuffle):
     print(f"Loaded '{set_name}' from: {folder} ({dataset_size} images, {len(dataset.classes)} classes)")
     return {set_name: dataloader}, dataset_size
 
-class EarlyStopping:
-    """Early stops the training when the monitored metric has stopped improving"""
-    def __init__(self, patience=3, delta=0.0, mode="min", metric_name="metric"):
-        self.patience = patience
-        self.delta = delta
-        self.mode = mode
-        self.metric_name = metric_name
-
-        if mode not in ["min", "max"]:
-            raise ValueError("mode must be 'min' or 'max'")
-
-        self.best = None
-        self.counter = 0
-        self.early_stop = False
-
-    def step(self, value):
-        """Called in a training step to check if early stopping is required"""
-        if self.best is None:
-            self.best = value
-            return
-
-        # Calculate if improvement is there
-        improvement = (
-            (self.mode == "min" and value < self.best - self.delta) or
-            (self.mode == "max" and value > self.best + self.delta)
-        )
-
-        if improvement:
-            self.best = value
-            self.counter = 0
-        else:
-            self.counter += 1
-            print(f"EarlyStopping: No improvement in {self.metric_name}. Patience Counter {self.counter}/{self.patience}")
-
-            if self.counter >= self.patience:
-                print(f"\nEarly stopping on {self.metric_name}!!!\n")
-                self.early_stop = True
-
 
 def train_model(model_ft, criterion, optimizer, scheduler, num_epochs=50):
     """Trains the model, validates each epoch, and saves logs and best weights."""
@@ -124,21 +86,9 @@ def train_model(model_ft, criterion, optimizer, scheduler, num_epochs=50):
     best_acc = 0.0
     train_logs, val_logs = [], []
 
-    # Initializing early stopping
-    monitor_metric = "val_accuracy"
-    # monitor_metric = "batch_acc"
-    patience = 3
-    
-    early_stopper = EarlyStopping(
-        patience=patience,
-        delta=0.001,
-        mode="max",
-        metric_name=monitor_metric
-    )
-    
     # Initialize TensorBoard writer
     writer = SummaryWriter(log_dir=os.path.join(os.getcwd(), "runs", timestamp))
-    print(f"TensorBoard logs will be saved to: ./runs/{timestamp}")
+    print(f"TensorBoard logs will be saved to: ./runs/cos_{timestamp}")
 
     for epoch in range(epoch_to_resume_from, num_epochs):
         print(f"\nEpoch {epoch + 1}/{num_epochs}")
@@ -175,17 +125,9 @@ def train_model(model_ft, criterion, optimizer, scheduler, num_epochs=50):
             batch_counter += 1
 
             # Display collective batch stats every few batches
-            if batch_counter % 32 == 0:
+            if batch_counter % batch_size == 0:  # adjust frequency as needed
                 batch_acc = (running_corrects.double() / (batch_counter * batch_size)).item()
                 print(f"[Batch {batch_counter}] Loss: {loss.item():.4f} | Train Acc: {batch_acc:.4f}")
-
-                # Evaluation of early stopping in batch training phase
-                """early_stopper.step(batch_acc)
-            
-                if early_stopper.early_stop:
-                    print(f"Training stopped early. Best {monitor_metric}: {early_stopper.best}")
-                    best_model_wts = model_ft.state_dict()
-                    break"""
 
         # Calculate epoch statistics
         epoch_loss = running_loss / dset_sizes
@@ -221,14 +163,6 @@ def train_model(model_ft, criterion, optimizer, scheduler, num_epochs=50):
         epoch_val_prec = precision_score(all_labels, all_preds, average="macro", zero_division=0)
         epoch_val_rec = recall_score(all_labels, all_preds, average="macro", zero_division=0)
         epoch_val_f1 = f1_score(all_labels, all_preds, average="macro", zero_division=0)
-
-        # Evaluation of early stopping in validation phase
-        early_stopper.step(epoch_val_acc)
-
-        if early_stopper.early_stop:
-            print(f"Training stopped early. Best {monitor_metric}: {early_stopper.best}")
-            best_model_wts = model_ft.state_dict()
-            break
 
         # Step the scheduler
         scheduler.step()
@@ -275,9 +209,9 @@ def train_model(model_ft, criterion, optimizer, scheduler, num_epochs=50):
 
     # Save logs to JSON
     os.makedirs(os.path.join(os.getcwd(), "logs"), exist_ok=True)
-    with open(os.path.join(os.getcwd(), f"logs/train_logs_{timestamp}.json"), "w") as f:
+    with open(os.path.join(os.getcwd(), f"logs/cos_train_logs_{timestamp}.json"), "w") as f:
         json.dump(train_logs, f, indent=4)
-    with open(os.path.join(os.getcwd(), f"logs/val_logs_{timestamp}.json"), "w") as f:
+    with open(os.path.join(os.getcwd(), f"logs/cos_val_logs_{timestamp}.json"), "w") as f:
         json.dump(val_logs, f, indent=4)
     
     # End of training wrapping up
@@ -289,7 +223,7 @@ def train_model(model_ft, criterion, optimizer, scheduler, num_epochs=50):
     # Save the best model weights
     os.makedirs(os.path.join(os.getcwd(), "models"), exist_ok=True)
     model_ft.load_state_dict(best_model_wts)
-    model_out_path = os.path.join(os.getcwd(), f"models/{net_name}_best_{timestamp}.pth")
+    model_out_path = os.path.join(os.getcwd(), f"models/cos_{net_name}_best_{timestamp}.pth")
     torch.save(model_ft, model_out_path)
     print(f"Model saved to {model_out_path}")
 
@@ -369,7 +303,7 @@ def test_model(model, criterion):
     }
 
     os.makedirs(os.path.join(os.getcwd(), "logs"), exist_ok=True)
-    with open(os.path.join(os.getcwd(), f"logs/model_report_{timestamp}.json"), "w") as f:
+    with open(os.path.join(os.getcwd(), f"logs/cos_model_report_{timestamp}.json"), "w") as f:
         json.dump(report, f, indent=4)
     print(f"Model report saved as model_report_{timestamp}.json")
 
@@ -379,7 +313,7 @@ def run():
     if weights_loc:
         model_ft = torch.load(weights_loc)
     else:
-        model_ft = EfficientNet.from_pretrained("efficientnet-b7")
+        model_ft = EfficientNet.from_pretrained(net_name)
 
     num_ftrs = model_ft._fc.in_features
     model_ft._fc = nn.Linear(num_ftrs, class_num)
@@ -390,9 +324,9 @@ def run():
     criterion = nn.CrossEntropyLoss().cuda() if use_gpu else nn.CrossEntropyLoss()
     optimizer = optim.SGD(model_ft.parameters(), lr=learning_rate, momentum=momentum, weight_decay=weight_decay)
     # Exponential learning rate scheduler
-    scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=gamma)
+    # scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=gamma)
     # Cosine learning rate scheduler
-    # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=1, eta_min=0)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=1, eta_min=0)
 
     # Run training and validation
     train_logs, val_logs, best_model_wts = train_model(model_ft, criterion, optimizer, scheduler, num_epochs=num_epochs)

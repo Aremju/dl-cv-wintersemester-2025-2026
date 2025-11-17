@@ -1,0 +1,92 @@
+[
+    {
+        "epoch": 1,
+        "loss": 1.7558,
+        "accuracy": 0.7708,
+        "learning_rate": 0.00018
+    },
+    {
+        "epoch": 2,
+        "loss": 0.6313,
+        "accuracy": 0.9407,
+        "learning_rate": 0.000162
+    },
+    {
+        "epoch": 3,
+        "loss": 0.3672,
+        "accuracy": 0.9499,
+        "learning_rate": 0.00014580000000000002
+    },
+    {
+        "epoch": 4,
+        "loss": 0.2729,
+        "accuracy": 0.958,
+        "learning_rate": 0.00013122000000000003
+    },
+    {
+        "epoch": 5,
+        "loss": 0.228,
+        "accuracy": 0.9579,
+        "learning_rate": 0.00011809800000000003
+    },
+    {
+        "epoch": 6,
+        "loss": 0.2024,
+        "accuracy": 0.9607,
+        "learning_rate": 0.00010628820000000004
+    },
+    {
+        "epoch": 7,
+        "loss": 0.1878,
+        "accuracy": 0.9605,
+        "learning_rate": 9.565938000000004e-05
+    },
+    {
+        "epoch": 8,
+        "loss": 0.1728,
+        "accuracy": 0.9644,
+        "learning_rate": 8.609344200000004e-05
+    },
+    {
+        "epoch": 9,
+        "loss": 0.1645,
+        "accuracy": 0.9639,
+        "learning_rate": 7.748409780000004e-05
+    },
+    {
+        "epoch": 10,
+        "loss": 0.1547,
+        "accuracy": 0.9664,
+        "learning_rate": 6.973568802000003e-05
+    },
+    {
+        "epoch": 11,
+        "loss": 0.1509,
+        "accuracy": 0.967,
+        "learning_rate": 6.276211921800003e-05
+    },
+    {
+        "epoch": 12,
+        "loss": 0.1474,
+        "accuracy": 0.967,
+        "learning_rate": 5.6485907296200035e-05
+    },
+    {
+        "epoch": 13,
+        "loss": 0.1442,
+        "accuracy": 0.9669,
+        "learning_rate": 5.083731656658003e-05
+    },
+    {
+        "epoch": 14,
+        "loss": 0.1406,
+        "accuracy": 0.9676,
+        "learning_rate": 4.575358490992203e-05
+    },
+    {
+        "epoch": 15,
+        "loss": 0.1337,
+        "accuracy": 0.9694,
+        "learning_rate": 4.117822641892983e-05
+    }
+]
