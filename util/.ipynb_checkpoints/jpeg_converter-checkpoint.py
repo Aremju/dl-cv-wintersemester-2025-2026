@@ -1,7 +1,7 @@
 import os
 
 def rename_images_to_jpg_recursive(base_folder):
-    # Endungen, die vereinheitlicht werden sollen
+    # Changes to following formats
     extensions = [".jpeg", ".png", ".jfif", ".heic", ".webp"]
 
     for root, _, files in os.walk(base_folder):
@@ -14,7 +14,7 @@ def rename_images_to_jpg_recursive(base_folder):
                 new_name = f"{name}.jpg"
                 new_path = os.path.join(root, new_name)
 
-                # Konfliktlösung: falls Datei existiert, fortlaufende Nummer anhängen
+                # If image already exists put number after
                 counter = 1
                 while os.path.exists(new_path):
                     new_name = f"{name}_{counter}.jpg"
