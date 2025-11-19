@@ -1,55 +1,75 @@
 import os
-from tensorboard.backend.event_processing import event_accumulator
+import glob
 import matplotlib.pyplot as plt
+from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
 
+BASE = "output_results_final"
 
-def find_latest_event_file(tensorboard_log_directory: str) -> str:
-    """Finds the latest .tfevents file in a given directory."""
-    event_files = [f for f in os.listdir(tensorboard_log_directory) if f.startswith("events.out.tfevents")]
+SCHEDULERS = {
+    "Cosine": os.path.join(BASE, "Cosine"),
+    "Linear": os.path.join(BASE, "Linear"),
+    "No Scheduler": os.path.join(BASE, "No_Scheduler_No_Augmentation"),
+}
+
+AUGMENTATIONS = {
+    "CNN_Aug": os.path.join(BASE, "CNN_Augmentation"),
+    "ViT_Aug": os.path.join(BASE, "ViT_Augmentation"),
+    "No_Aug": os.path.join(BASE, "No_Scheduler_No_Augmentation"),
+}
+
+VAL_ACC = "eval/accuracy"
+VAL_LOSS = "eval/loss"
+
+def load_scalars(event_dir, tag):
+    """Loads scalar values from a TensorBoard event file."""
+    event_files = glob.glob(os.path.join(event_dir, "**", "events.out.tfevents.*"), recursive=True)
     if not event_files:
-        raise FileNotFoundError(f"Keine .tfevents-Datei in '{tensorboard_log_directory}' gefunden.")
-    event_files = sorted(event_files, key=lambda f: os.path.getmtime(os.path.join(tensorboard_log_directory, f)))
-    return os.path.join(tensorboard_log_directory, event_files[-1])
+        raise FileNotFoundError(f"No eventfile found in {event_dir}.")
+    accumulator = EventAccumulator(event_files[0])
+    accumulator.Reload()
+    if tag not in accumulator.Tags()["scalars"]:
+        raise ValueError(f"tag '{tag}' not available")
+    events = accumulator.Scalars(tag)
+    values = [e.value for e in events]
+    epochs = list(range(1, len(values) + 1))
+    return epochs, values
 
+def plot_comparison(group_dict, title_prefix):
+    """Creates two diagrams with validation accuracy and loss for each group
+       and saves them as PNG."""
+    plt.figure(figsize=(14, 5))
 
-def load_scalars_from_log(log_path: str) -> dict:
-    """Loads scalar data from a TensorBoard log file."""
-    ea = event_accumulator.EventAccumulator(log_path)
-    ea.Reload()
-    tags = ea.Tags().get("scalars", [])
-    scalar_dict = {}
-    for tag in tags:
-        data = ea.Scalars(tag)
-        scalar_dict[tag] = {
-            "steps": [s.step for s in data],
-            "values": [s.value for s in data],
-        }
-    return scalar_dict
-
-
-def plot_metric(scalar_dict: dict, metric_names: dict, title: str = None, ylabel: str = None):
-    """Plots a tensorboard metric as a line plot in matplotlib."""
-    plt.figure(figsize=(8, 5))
-    for key in metric_names.keys():
-        if key not in scalar_dict:
-            print(f"Could not find '{key}' in logfiles")
-            continue
-        plt.plot(scalar_dict[key]["steps"], scalar_dict[key]["values"], label=metric_names[key], linewidth=2)
-    plt.xlabel("Step")
-    plt.ylabel(ylabel or "Value")
-    plt.title(title)
+    plt.subplot(1, 2, 2)
+    for name, path in group_dict.items():
+        epochs, vals = load_scalars(path, VAL_LOSS)
+        plt.plot(epochs, vals, label=name)
+    plt.title(f"{title_prefix} – Validation Loss")
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.xticks([1, 2, 3, 4, 5])
     plt.legend()
     plt.grid(True)
+
+    plt.subplot(1, 2, 1)
+    for name, path in group_dict.items():
+        epochs, vals = load_scalars(path, VAL_ACC)
+        plt.plot(epochs, vals, label=name)
+    plt.title(f"{title_prefix} – Validation Accuracy")
+    plt.xlabel("Epoch")
+    plt.ylabel("Accuracy")
+    plt.xticks([1, 2, 3, 4, 5])
+    plt.legend()
+    plt.grid(True)
+
     plt.tight_layout()
+
+    safe_name = title_prefix.replace(" ", "_")
+    filename = f"{safe_name}_vit.png"
+    plt.savefig(filename, dpi=300)
+    print(f"Saved as: {filename}")
+
     plt.show()
 
 
-if __name__ == "__main__":
-    log_dir = "output-models/runs/Nov08_19-47-29_gpu-jupyterlab-lunruh-74bf78ccfd-x2fkr"
-    log_file = find_latest_event_file(log_dir)
-    print(f"Used log file: {log_file}")
-    scalars = load_scalars_from_log(log_file)
-    print("Available metrics:", list(scalars.keys()))
-    # plot needed metrics for the paper
-    plot_metric(scalars, {"train/loss": "train", "eval/loss": "val"}, title="Train vs Validation Loss", ylabel="Loss")
-    plot_metric(scalars, {"eval/accuracy": "val"}, title="Train vs Validation Accuracy", ylabel="Accuracy")
+plot_comparison(SCHEDULERS, "LR-Scheduler")
+plot_comparison(AUGMENTATIONS, "Augmentations")

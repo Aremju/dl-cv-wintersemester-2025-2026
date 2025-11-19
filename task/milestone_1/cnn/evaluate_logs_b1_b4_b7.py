@@ -132,8 +132,8 @@ def plot_loss(ax_loss, series: list):
 
 
 def main():
-    logs_directory = 'logs'
-    output_directory = 'logs/plots'
+    logs_directory = 'logs_modelvergleich_b1-b7'
+    output_directory = 'logs_modelvergleich_b1-b7/plots'
     runs = find_runs(logs_directory)
     plot_validation_side_by_side(runs, output_directory)
 
