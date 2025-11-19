@@ -1,4 +1,10 @@
-models
 data
 .idea
 .vscode
+data/animal_images
+util/model_loading/__pycache__/**
+task/milestone_1/vision_transformer/logs/
+checkpoint*
+task/milestone_1/cnn/models/
+
+offline_models/**
