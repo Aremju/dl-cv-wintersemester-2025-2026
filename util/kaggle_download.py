@@ -3,11 +3,11 @@ import shutil
 import kagglehub
 
 # Target directory
-target_dir = "../../data/animal_images"
+target_dir = "../../data/imagenet"
 
 # Temporary download of dataset
 print("Downloading dataset")
-path = kagglehub.dataset_download("utkarshsaxenadn/animal-image-classification-dataset")
+path = kagglehub.dataset_download("ifigotin/imagenetmini-1000")
 
 print(f"Downloaded dataset to: {path}")
 
