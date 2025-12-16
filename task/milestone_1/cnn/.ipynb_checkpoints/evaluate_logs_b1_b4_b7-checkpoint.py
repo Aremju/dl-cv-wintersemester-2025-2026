@@ -3,7 +3,7 @@ import os
 import matplotlib.pyplot as plt
 
 def load_json(path):
-    with open(path, 'r', encoding='utf-8') as f:
+    with open(path, 'r', encoding='utf-32') as f:
         return json.load(f)
 
 def find_runs(log_dir):

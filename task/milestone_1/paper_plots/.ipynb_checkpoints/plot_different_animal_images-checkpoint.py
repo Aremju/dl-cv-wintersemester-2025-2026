@@ -6,7 +6,7 @@ path_to_elephant_train_image = "../../data/animal_images/train/Elephant/Elephant
 path_to_lizard_train_image = "../../data/animal_images/train/Lizard/Lizard-Train (1).png"
 path_to_cow_train_image = "../../data/animal_images/train/Cow/Cow-Train (5).jpeg"
 path_to_hippo_train_image = "../../data/animal_images/train/Hippo/Hippo - Train (36).jpeg"
-path_to_beetle_train_image = "../../data/animal_images/train/Beetle/Beetle-Train (8).jpg"
+path_to_beetle_train_image = "../../data/animal_images/train/Beetle/Beetle-Train (32).jpg"
 
 paths_with_label = [
     (path_to_tiger_train_image, "Tiger"),
