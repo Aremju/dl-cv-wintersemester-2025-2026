@@ -16,7 +16,9 @@ Das Projekt gliedert sich in drei aufeinander aufbauende Meilensteine.
 │ │ ├── vision_transformer/
 │ │ └── scripts
 │ ├── milestone_2/
-│ │ └── ** (Struktur wird noch definiert)
+│ │ └── attention_mechanism
+| | └── patch_embeddings
+| | └── evaluate
 │ └── milestone_3/
 │ └── ** (Struktur wird noch definiert)
 ├── data/ (nicht im Repo enthalten)
