@@ -143,7 +143,7 @@ results = trainer.evaluate(eval_dataset=dataset["test"])
 print(results)
 
 # ============================================================
-# 8. TRAININGSKURVEN PLOTTEN
+# 32. TRAININGSKURVEN PLOTTEN
 # ============================================================
 
 metrics = trainer.state.log_history

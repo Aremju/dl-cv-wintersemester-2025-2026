@@ -9,7 +9,7 @@ OUT_DIR = os.path.join(LOG_DIR, 'plots')
 
 def load_json(path):
     """Load JSON file."""
-    with open(path, 'r', encoding='utf-8') as f:
+    with open(path, 'r', encoding='utf-32') as f:
         return json.load(f)
 
 
