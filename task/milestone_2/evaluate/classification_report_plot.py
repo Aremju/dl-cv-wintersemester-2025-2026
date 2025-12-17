@@ -3,17 +3,17 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
-csv_path = "classification_report.csv"
+csv_path = "final_classification_report.csv"
 
-def plot_f1_scores(csv_path):
-    """Plots the F1-Scores of the classification report as a bar chart."""
+def plot_precision_values_per_class(csv_path):
+    """Plots the Precision-Values of the classification report as a bar chart for each class."""
     df = pd.read_csv(csv_path)
 
     df.rename(columns={df.columns[0]: "class"}, inplace=True)
     class_df = df[~df["class"].isin(["accuracy", "macro avg", "weighted avg"])]
 
     classes = class_df["class"]
-    f1_scores = class_df["f1-score"].astype(float)
+    f1_scores = class_df["precision"].astype(float)
 
     x = np.arange(len(classes))
     colors = plt.cm.tab20(np.linspace(0, 1, len(classes)))
@@ -33,15 +33,13 @@ def plot_f1_scores(csv_path):
         )
 
     plt.xticks(x, classes, rotation=45, ha="right")
-    plt.ylabel("F1-Score")
-    plt.xlabel("Klasse")
-    plt.ylim(0.85, 1.0)
-
-    plt.title("F1-Scores pro Klasse")
+    plt.ylabel("Precision")
+    plt.xlabel("Class")
+    plt.ylim(0, 1.0)
 
     plt.tight_layout()
     os.makedirs("graphs", exist_ok=True)
-    plt.savefig(os.path.join("graphs", "f1_scores.png"))
+    plt.savefig(os.path.join("graphs", "precision_scores.png"))
     plt.close()
 
-plot_f1_scores(csv_path)
+plot_precision_values_per_class(csv_path)
