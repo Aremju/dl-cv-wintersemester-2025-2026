@@ -11,5 +11,5 @@ EVENT_FILE_DICT = {
 }
 
 
-plot_comparison(EVENT_FILE_DICT, "Entropy Scaling - Final 10 Epochs")
+plot_comparison(EVENT_FILE_DICT, "Entropy Scaling - Final 10 Epochs", xTicks=[1,2,3,4,5,6,7,8,9,10])
 
