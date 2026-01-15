@@ -20,7 +20,9 @@ Das Projekt gliedert sich in drei aufeinander aufbauende Meilensteine.
 | | └── patch_embeddings
 | | └── evaluate
 │ └── milestone_3/
-│ └── ** (Struktur wird noch definiert)
+│   ├── deit
+│   ├── beit
+│   └── evaluate
 ├── data/ (nicht im Repo enthalten)
 ├── models/ (nicht im Repo enthalten)
 ├── util/
