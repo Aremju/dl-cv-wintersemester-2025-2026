@@ -3,9 +3,12 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
-csv_path = "final_classification_report.csv"
+csv_paths = [
+    {"path": "best_classification_reports/beit/classification_report.csv", "name": "BEiT"},
+    {"path": "best_classification_reports/deit/classification_report.csv", "name": "DeiT"}
+]
 
-def plot_precision_values_per_class(csv_path):
+def plot_precision_values_per_class(csv_path, path_name):
     """Plots the Precision-Values of the classification report as a bar chart for each class."""
     df = pd.read_csv(csv_path)
 
@@ -39,7 +42,8 @@ def plot_precision_values_per_class(csv_path):
 
     plt.tight_layout()
     os.makedirs("graphs", exist_ok=True)
-    plt.savefig(os.path.join("graphs", "precision_scores.png"))
+    plt.savefig(os.path.join("graphs", f"precision_scores_{path_name}.png"))
     plt.close()
 
-plot_precision_values_per_class(csv_path)
+for entry in csv_paths:
+    plot_precision_values_per_class(entry["path"], entry["name"])
